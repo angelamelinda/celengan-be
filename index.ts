@@ -1,11 +1,19 @@
 import express from 'express';
-import morgan from 'morgan';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 
-app.use(morgan('tiny'));
+var corsOptions = {
+    origin: "http://localhost:1337"
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use(require('./src/routes/index.routes'));
 // First route
 app.get('/', (req, res) => {
@@ -13,4 +21,4 @@ app.get('/', (req, res) => {
 })
 
 // Starting server
-app.listen('1337')
+app.listen(process.env.PORT || 8080)

@@ -1,7 +1,8 @@
 import hash from 'object-hash';
 import { v4 as uuidv4 } from 'uuid';
 import { writeFileSync, readFileSync, existsSync, exists } from 'fs';
-import jwt from 'jsonwebtoken';
+import jwt, { VerifyErrors } from 'jsonwebtoken';
+import { IUser, IUserJWT } from '../interfaces';
 
 export const generateId = () => {
     return uuidv4();
@@ -23,10 +24,16 @@ export const getDateNow = () => {
     return new Date().toISOString();
 }
 
-export const getToken = (userid: string) => {
+export const getToken = (data: IUserJWT) => {
+    const expiredDate = new Date().getTime() + (24 * 60 * 60 * 1000);
+    console.log(expiredDate)
     return jwt.sign({
-        exp: Math.floor(Date.now() / 1000) + (60 * 60),
-        data: { userid }
-    }, 'secret');
+        exp: expiredDate,
+        data,
+    }, process.env.SECRET_TOKEN as string);
 
+}
+
+export const verifyToken = (token: string, callback: (err: VerifyErrors | null, decoded: any) => void) => {
+    return jwt.verify(token, process.env.SECRET_TOKEN as string, callback);
 }
