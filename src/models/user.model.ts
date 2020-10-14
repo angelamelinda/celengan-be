@@ -63,8 +63,6 @@ const register = (username: string, email: string, password: string) => {
         }
 
         const isFound = Object.keys(userData).some((key) => {
-            console.log(key, '--', userData[key].email === email, userData[key].email, email);
-            console.log(key, '--', userData[key].username === username, userData[key].username, username);
             return userData[key].email === email || userData[key].username === username
         })
 
@@ -103,3 +101,45 @@ export default {
     login,
     register,
 }
+
+// import mongoose, { Schema, Document } from 'mongoose';
+// import { hashPassword } from '../helpers/helper';
+// import { IUser } from '../interfaces';
+
+// export interface IUserSchema extends Document, IUser {
+
+// }
+
+// const UserSchema: Schema = new Schema({
+//     email: { type: String, required: true, unique: true },
+//     username: { type: String, required: true },
+//     password: { type: String, required: true }
+// }, { timestamps: true }
+// );
+
+// UserSchema.pre('save', (next) => {
+//     const user = this;
+
+//     if (user) {
+//         let { password }: IUserSchema = user;
+//         password = hashPassword(password as string);
+//         next();
+//     }
+
+// });
+
+// UserSchema.method('comparePassword', (candidatePassword: string, callback: (err: any, isMatch: boolean) => void) => {
+//     const user = this;
+//     if (user && hashPassword(candidatePassword) === (user as IUserSchema).password) {
+//         callback(null, true)
+//     }
+// });
+
+// UserSchema.method('toJSON', () => {
+//     const { __v, _id, ...object } = (this as any).toObject();
+//     object.id = _id;
+//     return object;
+// });
+
+// // Export the model and return your IUser interface
+// export default mongoose.model<IUserSchema>('User', UserSchema);

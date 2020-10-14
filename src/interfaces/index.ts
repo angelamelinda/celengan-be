@@ -22,8 +22,8 @@ export interface IUserJWT extends IUser {
 }
 
 export interface IBudget {
-    categoryId: number;
+    category_id: number;
     amount: number;
-    startDate: string;
-    endDate: string;
+    start_date: string;
+    end_date: string;
 }

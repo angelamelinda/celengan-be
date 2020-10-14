@@ -43,7 +43,7 @@ const postCategory = (name: string, userId: string, type: string) => {
     return new Promise((resolve, reject) => {
         let id = generateId();
 
-        while (categoryData[type].some((category: ICategory) => category.id === id)) {
+        while (categoryData && categoryData[type] && categoryData[type].some((category: ICategory) => category.id === id)) {
             id = generateId();
         }
 
