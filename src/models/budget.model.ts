@@ -1,117 +1,161 @@
-import { generateId, writeJSONFile } from "../helpers/helper";
-import { IBudget } from "../interfaces";
+import { IBudget, ICategory, IBudgetToExport } from "../interfaces";
+import BudgetModel from "./budget.schema.model";
+import CategoryModel from "./category.schema.model";
 
-const fileBudget = __dirname + '/../data/budgets.json';
-const budgetData = require(fileBudget);
+const getBudgetsByDate = (
+  startDateStr: string,
+  endDateStr: string,
+  userId: string,
+  categories: ICategory[]
+) => {
+  return new Promise((resolve, reject) => {
+    let categoryMap = new Map();
+    categories.forEach((value) => {
+      categoryMap.set(value._id.toString(), value);
+    });
 
-const getBudgetsByDate = (startDate: string, endDate: string, userId: string) => {
-    return new Promise((resolve, reject) => {
-        if (!budgetData[userId] && !startDate && !endDate) {
-            reject({
-                message: `the budget is not found`,
-                status: 400
-            })
-        }
+    let filter = {};
+    if (startDateStr && endDateStr) {
+      // query by date sent
+      const startDate: Date = new Date(startDateStr);
+      const endDate: Date = new Date(endDateStr);
+      console.log('START DATE', startDate, 'END DATE', endDate)
+      filter = {
+        user_id: userId,
+        $and: [
+          { start_date: { $gte: startDate } },
+          { end_date: { $lte: endDate } },
+        ],
+      };
+    } else {
+      filter = {
+        user_id: userId,
+      };
+    }
 
-        console.log(startDate, endDate, userId);
-
-        const budgetList = Object.keys(budgetData[userId]).map((budgetId) => {
-            console.log(budgetId, budgetData[userId], budgetData[userId][budgetId]);
-            const x = budgetData[userId] && budgetData[userId][budgetId] && budgetData[userId][budgetId].map((budgetList: IBudget) => budgetList.start_date === startDate && budgetList.end_date === endDate)
-            console.log(x);
-            return x;
-        })
-
-
-        resolve(budgetList)
-    })
-}
+    BudgetModel.find(filter)
+      .then((budgetList) => {
+        resolve(
+          budgetList.map((budgetItem) => {
+            return IBudgetToExport(
+              budgetItem,
+              categoryMap.get(budgetItem.category_id)
+            );
+          })
+        );
+      })
+      .catch((err) => {
+        reject({
+          message: "failed to get user budget",
+          status: 500,
+        });
+      });
+  });
+};
 
 const getBudgetById = (budgetId: string, userId: string) => {
-    return new Promise((resolve, reject) => {
-        if (!budgetData[userId] || !budgetData[userId][budgetId]) {
-            reject({
-                message: `budget ${budgetId} is not found`,
-                status: 400
-            })
-        }
+  return new Promise((resolve, reject) => {
+    if (!userId || !budgetId) {
+      reject({ message: `bad request`, status: 400 });
+    }
 
-        resolve(budgetData[userId][budgetId])
-    })
-}
+    BudgetModel.findById(budgetId)
+      .then((budgets) => {
+        if (budgets) {
+          CategoryModel.findById(budgets.category_id)
+            .then((category) => {
+              resolve(IBudgetToExport(budgets, category?.toObject()));
+            })
+            .catch((err) => {
+              throw err;
+            });
+        } else {
+          reject({ message: "bad request", status: 400 });
+        }
+      })
+      .catch((err) => {
+        reject({ message: "bad request", status: 400 });
+      });
+  });
+};
 
 const postBudget = (budget: IBudget, userId: string) => {
-    return new Promise((resolve, reject) => {
-        let id = generateId();
-        console.log('here', budgetData && budgetData[userId] && Object.keys(budgetData[userId]));
-        while (budgetData && budgetData[userId] && Object.keys(budgetData[userId]).some((budgetId) => {
-            console.log(budgetId);
-            return budgetId === id
-        })) {
-            id = generateId();
-        }
-        console.log('BUDGET', budget)
-        try {
-            writeJSONFile(fileBudget, {
-                ...budgetData, [userId]: {
-                    ...budgetData[userId], [id]: budget
-                }
-            })
+  return new Promise((resolve, reject) => {
+    if (budget.category_id) {
+      CategoryModel.findById(budget.category_id)
+        .then((category) => {
+          if (!category) {
+            reject({ message: "invalid category", status: 400 });
+            return;
+          }
 
-            resolve()
-        } catch (e) {
-            console.log(e);
-            reject({
-                message: 'failed to create budget',
-                status: 400
+          budget.user_id = userId;
+          budget.spent = 0;
+          BudgetModel.create(budget)
+            .then((budget) => {
+              resolve(budget);
             })
-        }
-    })
-}
+            .catch((err) => {
+              throw err;
+            });
+        })
+        .catch((err) => {
+          console.log(err);
+          reject({ message: "failed to add budget", status: 500 });
+        });
+    }
+  });
+};
 
 const updateBudget = (budget: IBudget, budgetId: string, userId: string) => {
-    return new Promise((resolve, reject) => {
-        if (!budgetData[userId] || !budgetData[userId][budgetId]) {
-            reject({
-                message: `failed to update budget ${budgetId}`,
-                status: 400
-            })
-        } else {
-            try {
-                writeJSONFile(fileBudget, {
-                    ...budgetData, [userId]: {
-                        ...budgetData[userId], [budgetId]: budget
-                    }
-                })
-
-                resolve()
-            } catch (e) {
-                reject({
-                    message: `failed to update budget ${budgetId}`,
-                    status: 400
-                })
-            }
-        }
+  return new Promise((resolve, reject) => {
+    BudgetModel.find({
+      user_id: userId,
+      _id: budgetId,
     })
-}
+      .then((res) => {
+        if (res.length == 0) {
+          reject({ message: "bad request", status: 400 });
+          return;
+        }
+
+        BudgetModel.updateOne({ _id: budgetId }, budget)
+          .then((budget) => {
+            resolve(budget);
+          })
+          .catch((err) => {
+            console.log(err);
+            reject({ message: "failed to update budget", status: 500 });
+          });
+      })
+      .catch((err) => {
+        reject({ message: "bad request", status: 400 });
+      });
+  });
+};
 
 const deleteBudget = (budgetId: string, userId: string) => {
-    return new Promise((resolve, reject) => {
-        if (!budgetData[userId][budgetId]) {
-            reject({
-                message: `budget ${budgetId} is not found`,
-                status: 404
-            })
-        }
-
-        resolve()
-    });
-}
+  return new Promise((resolve, reject) => {
+    BudgetModel.find({ user_id: userId, _id: budgetId })
+      .then((res) => {
+        BudgetModel.deleteOne({ _id: budgetId })
+          .then((budget) => {
+            resolve(budget);
+          })
+          .catch((err) => {
+            reject({ message: "failed to delete budget", status: 500 });
+          });
+      })
+      .catch((err) => {
+        reject({ message: "bad request", status: 400 });
+      });
+  });
+};
 
 export default {
-    getBudgetById,
-    getBudgetsByDate,
-    postBudget,
-    updateBudget,
-    deleteBudget
-}
+  getBudgetById,
+  getBudgetsByDate,
+  postBudget,
+  updateBudget,
+  deleteBudget,
+};

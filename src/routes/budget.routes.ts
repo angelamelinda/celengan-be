@@ -1,93 +1,128 @@
-import { Router } from 'express';
-import { authenticate } from '../helpers/middleware';
-import budget from '../models/budget.model';
+import { Router } from "express";
+import { authenticate } from "../helpers/middleware";
+import budget from "../models/budget.model";
+import category from "../models/category.model";
+import { ICategory } from "../interfaces";
 
 const router = Router();
 
-router.get('/:id', authenticate, async (req: any, res: any) => {
+// get by id
+router.get("/:id", authenticate, async (req: any, res: any) => {
     const { user, params } = req;
     const { id } = params;
 
-    await budget.getBudgetById(id, user.id).then((budget) => {
-        res.json({ data: budget })
-    }).catch((err) => {
-        const { status, message } = err;
+    await budget
+        .getBudgetById(id, user._id)
+        .then((budget) => {
+            res.json({ data: budget });
+        })
+        .catch((err) => {
+            const { status, message } = err;
 
-        if (status && message) {
-            res.status(status).json({ message })
-        } else {
-            res.status(500).json({ message: 'Sorry something went wrong!' })
-        }
-    })
-})
+            if (status && message) {
+                res.status(status).json({ message });
+            } else {
+                res.status(500).json({ message: "Sorry something went wrong!" });
+            }
+        });
+});
 
-router.get('/', authenticate, async (req: any, res: any) => {
+// get range
+router.get("/", authenticate, async (req: any, res: any) => {
     const { user, query } = req;
     const { start_date, end_date } = query;
+    await category
+        .getCategoryByUserId(user._id)
+        .then((categories) => {
+            let converted: any = categories as {
+                expense: ICategory[];
+                income: ICategory[];
+            };
 
-    await budget.getBudgetsByDate(start_date, end_date, user.id).then((budget) => {
-        res.json({ data: budget })
-    }).catch((err) => {
-        const { status, message } = err;
+            budget
+                .getBudgetsByDate(start_date, end_date, user._id, [
+                    ...converted.expense,
+                    ...converted.income,
+                ])
+                .then((budget) => {
+                    res.json({ data: budget });
+                })
+                .catch((err) => {
+                    throw err;
+                });
+        })
+        .catch((err) => {
+            const { status, message } = err;
+            console.log(err);
 
-        if (status && message) {
-            res.status(status).json({ message })
-        } else {
-            res.status(500).json({ message: 'Sorry something went wrong!' })
-        }
-    })
-})
+            if (status && message) {
+                res.status(status).json({ message });
+            } else {
+                res.status(500).json({ message: "Sorry something went wrong!" });
+            }
+        });
+});
 
-router.delete('/:id', authenticate, async (req: any, res: any) => {
+// delete
+router.delete("/:id", authenticate, async (req: any, res: any) => {
     const { user, params } = req;
     const { id } = params;
 
-    await budget.deleteBudget(id, user.id).then(() => {
-        res.json({ message: 'success' })
-    }).catch((err) => {
-        const { status, message } = err;
+    await budget
+        .deleteBudget(id, user._id)
+        .then(() => {
+            res.json({ message: "success" });
+        })
+        .catch((err) => {
+            const { status, message } = err;
 
-        if (status && message) {
-            res.status(status).json({ message })
-        } else {
-            res.status(500).json({ message: 'Sorry something went wrong!' })
-        }
-    })
-})
+            if (status && message) {
+                res.status(status).json({ message });
+            } else {
+                res.status(500).json({ message: "Sorry something went wrong!" });
+            }
+        });
+});
 
-router.put('/:id', authenticate, async (req: any, res: any) => {
+// update
+router.put("/:id", authenticate, async (req: any, res: any) => {
     const { user, params, body } = req;
     const { id } = params;
 
-    await budget.updateBudget(body, id, user.id).then(() => {
-        res.json({ message: 'success' })
-    }).catch((err) => {
-        const { status, message } = err;
+    await budget
+        .updateBudget(body, id, user._id)
+        .then(() => {
+            res.json({ message: "success" });
+        })
+        .catch((err) => {
+            const { status, message } = err;
 
-        if (status && message) {
-            res.status(status).json({ message })
-        } else {
-            res.status(500).json({ message: 'Sorry something went wrong!' })
-        }
-    })
-})
+            if (status && message) {
+                res.status(status).json({ message });
+            } else {
+                res.status(500).json({ message: "Sorry something went wrong!" });
+            }
+        });
+});
 
-
-router.post('/', authenticate, async (req: any, res: any) => {
+// Add new
+router.post("/", authenticate, async (req: any, res: any) => {
     const { user, body } = req;
-    console.log('body', body)
-    await budget.postBudget(body, user.id).then(() => {
-        res.json({ message: 'success' })
-    }).catch((err) => {
-        const { status, message } = err;
-        console.log('error', err)
-        if (status && message) {
-            res.status(status).json({ message })
-        } else {
-            res.status(500).json({ message: 'Sorry something went wrong!' })
-        }
-    })
-})
 
+    await budget
+        .postBudget(body, user._id)
+        .then((budget) => {
+            res.json({ message: "success", data: budget });
+        })
+        .catch((err) => {
+            const { status, message } = err;
+            console.log("error", err);
+            if (status && message) {
+                res.status(status).json({ message });
+            } else {
+                res.status(500).json({ message: "Sorry something went wrong!" });
+            }
+        });
+});
 
 module.exports = router;
