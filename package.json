@@ -20,8 +20,6 @@
   },
   "homepage": "https://github.com/angelamelinda/celengan-be#readme",
   "dependencies": {
-    "@types/cors": "^2.8.8",
-    "@types/mongodb": "^3.5.27",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -45,6 +43,8 @@
     "morgan": "^1.10.0",
     "nodemon": "^2.0.4",
     "ts-node": "^9.0.0",
-    "typescript": "^4.0.3"
+    "typescript": "^4.0.3",
+    "@types/cors": "^2.8.8",
+    "@types/mongodb": "^3.5.27"
   }
 }

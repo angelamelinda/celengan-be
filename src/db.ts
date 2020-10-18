@@ -1,31 +1,19 @@
-import { MongoClient } from 'mongodb';
+import mongoose from "mongoose";
 
-const dbConnectionUrl = `mongodb+srv://${process.env.MONGODB_USERNAME}:<${encodeURIComponent(process.env.MONGODB_PASSWORD as string)}>@cluster0.shhxs.mongodb.net/<${encodeURIComponent(process.env.MONGODB_NAME as string)}>?retryWrites=true&w=majority`
+const dbConnectionUrl = `${process.env.MONGODB_CONN_STRING}`;
+mongoose.set("debug", true);
 
-const initialize = (
-    dbName: string,
-    dbCollectionName: string,
-    successCallback: (dbCollection: any) => void,
-    failureCallback: (err: any) => void
-) => {
+//Set up default mongoose connection
+mongoose.connect(dbConnectionUrl, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
 
-    MongoClient.connect(dbConnectionUrl, { useUnifiedTopology: true }).then((client) => {
-        const db = client.db(process.env.MONGODB_NAME)
-    }).catch((err) => {
-        failureCallback(err);
-    })
-    MongoClient.connect(dbConnectionUrl, (err, dbInstance) => {
-        if (err) {
-            console.log(`[MongoDB connection] ERROR: ${err}`);
-            failureCallback(err);
-        } else {
-            const dbObject = dbInstance.db(dbName);
-            const dbCollection = dbObject.collection(dbCollectionName);
-            console.log("[MongoDB connection] SUCCESS");
+//Get the default connection
+var db = mongoose.connection;
 
-            successCallback(dbCollection);
-        }
-    });
-}
+//Bind connection to error event (to get notification of connection errors)
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
+db.on("connected", console.error.bind(console, "MongoDB connected:"));
 
-export default initialize;
+export default db;
