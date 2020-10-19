@@ -406,12 +406,53 @@ const updateCashflow = (
         }
 
         //   update budget if necessary
-        if (
+        if (cashflow.budget_id && cashflow.budget_id !== oldCashflow[0].budget_id && oldCashflow[0].type && cashflow.amount !== null) {
+          BudgetModel.findById(oldCashflow[0].budget_id)
+            .then((budget) => {
+              if (budget) {
+                budget.spent -= Number(oldCashflow[0].amount);
+                budget?.save()
+                  .then((res) => {
+                    BudgetModel.findById(cashflow.budget_id)
+                      .then((budget) => {
+                        if (budget) {
+                          budget.spent += Number(cashflow.amount);
+                          budget
+                            ?.save()
+                            .then((res) => {
+                              CashFlowModel.updateOne({ _id: cashflowId }, cashflow)
+                                .then((budget) => {
+                                  resolve(budget);
+                                })
+                                .catch((err) => {
+                                  throw err;
+                                });
+                            })
+                            .catch((err) => {
+                              throw err;
+                            });
+                        }
+                      })
+                      .catch((err) => {
+                        throw err;
+                      });
+                  })
+                  .catch((err) => {
+                    throw err;
+                  });
+              }
+            })
+            .catch((err) => {
+              throw err;
+            });
+        }
+        else if (
           oldCashflow[0].budget_id &&
           oldCashflow[0].type === "expense" &&
           cashflow.amount != null
         ) {
-          BudgetModel.findById(cashflow.budget_id || oldCashflow[0].budget_id)
+
+          BudgetModel.findById(oldCashflow[0].budget_id)
             .then((budget) => {
               if (budget) {
                 budget.spent -= oldCashflow[0].amount;
