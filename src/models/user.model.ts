@@ -34,7 +34,7 @@ const login = (email: string, password: string) => {
           username: user.username,
         };
         const token = getToken(userJWT);
-        resolve({ token });
+        resolve({ token, user: userJWT });
       })
       .catch((err) => {
         console.log(err);
