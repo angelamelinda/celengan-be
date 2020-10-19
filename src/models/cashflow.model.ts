@@ -12,6 +12,7 @@ import {
 import CashFlowModel from "./cashflow.schema.model";
 import BudgetModel from "./budget.schema.model";
 import CategoryModel from "./category.schema.model";
+import { getCategoryById } from "./category.model";
 
 const getCashflowById = (cashflowId: string, userId: string) => {
   return new Promise((resolve, reject) => {
@@ -40,14 +41,24 @@ const getCashflowById = (cashflowId: string, userId: string) => {
                       throw err;
                     });
                 } else {
-                  throw Error("not found");
+                  resolve(ICashflowToExport(
+                    cashflow,
+                    undefined,
+                    undefined
+                  ));
+
+                  // throw Error("not found");
                 }
               })
               .catch((err) => {
                 throw err;
               });
           } else {
-            resolve(ICashflowToExport(cashflow, undefined, undefined));
+            getCategoryById(cashflow.category_id as string, userId).then((resp => {
+              resolve(ICashflowToExport(cashflow, undefined, resp as ICategory));
+            })).catch((err) => {
+              throw err;
+            });
           }
         } else {
           throw Error("not found");
@@ -400,7 +411,7 @@ const updateCashflow = (
           oldCashflow[0].type === "expense" &&
           cashflow.amount != null
         ) {
-          BudgetModel.findById(oldCashflow[0].budget_id)
+          BudgetModel.findById(cashflow.budget_id || oldCashflow[0].budget_id)
             .then((budget) => {
               if (budget) {
                 budget.spent -= oldCashflow[0].amount;

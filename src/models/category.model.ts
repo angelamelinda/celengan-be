@@ -1,7 +1,7 @@
 import { ICategory } from "../interfaces";
 import CategoryModel from "./category.schema.model";
 
-const getCategoryById = (cashflowId: string, userId: string) => {
+export const getCategoryById = (cashflowId: string, userId: string) => {
   return new Promise((resolve, reject) => {
     if (!userId || !cashflowId) {
       reject({ message: `bad request`, status: 400 });
