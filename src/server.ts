@@ -9,11 +9,11 @@ require("dotenv").config();
 
 const app = express();
 
-// const corsOptions = {
-//     origin: process.env.ORIGIN_CORS,
-//     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-// }
-// app.use(cors(corsOptions))
+const corsOptions = {
+    origin: process.env.ORIGIN_CORS,
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+}
+app.use(cors(corsOptions))
 app.use(morgan("tiny"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
