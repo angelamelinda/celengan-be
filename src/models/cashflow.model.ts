@@ -223,12 +223,14 @@ const getCashflowReport = (
             // count per budget
             let budgetID = cashflowVal.budget_id;
             let budgetInfo = budgetMap.get(budgetID);
-            if (!cashflowVal.budget_id) {
+            if (!budgetInfo) {
               budgetID = "uncategorized";
               budgetInfo = {
                 _id: "uncategorized",
                 name: "Uncategorized",
                 category: {},
+                budget: 0,
+                spent: 0,
               };
             }
 
@@ -309,6 +311,7 @@ const getCashflowReport = (
 
           result.totalBalance = result.totalIncome - result.totalExpenses;
 
+          // count report for each budget item
           let budgets: IBudgetCashflowPortion[] = [];
           reportPerBudget.forEach((value) => {
             value.expensePercentage = +(
@@ -319,10 +322,34 @@ const getCashflowReport = (
               (value.totalIncome / result.totalIncome) *
               100
             ).toFixed(3);
+            if (!value.incomePercentage) {
+              value.incomePercentage = 0.00;
+            }
+            if (!value.expensePercentage) {
+              value.incomePercentage = 0.00;
+            }
             budgets.push(value);
           });
+
+          // if no cashflow found for budget id, still return empty report
+          budgetMap.forEach((budgetObject) => {
+            let found = budgets.some(budgetPortion =>
+              budgetPortion.budget._id == budgetObject._id
+            );
+            if (!found) {
+              budgets.push({
+                totalExpenses: 0,
+                totalIncome: 0,
+                expensePercentage: 0,
+                incomePercentage: 0,
+                budget: budgetObject,
+              });
+            }
+          })
+
           result.budgetReport = budgets;
 
+          // collect daily report from map
           let daily: IBudgetDailyReport[] = [];
           reportDaily.forEach((value) => {
             daily.push(value);

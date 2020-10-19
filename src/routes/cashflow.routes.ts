@@ -21,7 +21,7 @@ router.get("/report", authenticate, async (req: any, res: any) => {
             const categoryArray = [...converted.expense, ...converted.income];
 
             budget
-                .getBudgetsByDate("", "", user._id, categoryArray)
+                .getBudgetsByDate(start_date, end_date, user._id, categoryArray)
                 .then((budgets) => {
                     cashflow
                         .getCashflowReport(
