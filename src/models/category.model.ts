@@ -51,7 +51,10 @@ const getCategoryByUserId = (userId: string) => {
             income: incomes,
           });
         } else {
-          reject({ message: "not found", status: 404 });
+          resolve({
+            expense: [],
+            income: [],
+          });
         }
       })
       .catch((err) => {
