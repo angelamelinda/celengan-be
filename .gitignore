@@ -3,3 +3,4 @@
 /src/config
 .env
 /build
+/functions

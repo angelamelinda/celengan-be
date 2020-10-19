@@ -6,9 +6,9 @@ const cashflow = require("./cashflow.routes");
 
 const router = express.Router();
 
-router.use("/api/v1/user", user);
-router.use("/api/v1/category", category);
-router.use("/api/v1/budget", budget);
-router.use("/api/v1/cashflow", cashflow);
+router.use("/.netlify/functions/server/api/v1/user", user);
+router.use("/.netlify/functions/server/api/v1/category", category);
+router.use("/.netlify/functions/server/api/v1/budget", budget);
+router.use("/.netlify/functions/server/api/v1/cashflow", cashflow);
 
 module.exports = router;
